@@ -5,10 +5,11 @@ import rateLimit from '@fastify/rate-limit';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import type { Db } from './db.js';
+import { registerAdminRoutes } from './admin.js';
 import type { UserRecord, UserRole } from './types.js';
 const loginSchema = z.object({ email: z.email().max(254), password: z.string().min(1).max(256) });
 export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string }) {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, bodyLimit: 6 * 1024 * 1024 });
   app.register(cors, { origin: options.webOrigin });
   app.register(jwt, { secret: options.jwtSecret, sign: { expiresIn: '8h' } });
   app.register(rateLimit, { global: false });
@@ -49,6 +50,7 @@ export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string
     async () => ({ role: 'buyer', title: 'Comprador', description: 'Próximo paso: jornadas asignadas y listas de compra.' }));
   app.get('/api/customer/overview', { preHandler: [authenticate, requireRole('customer')] },
     async () => ({ role: 'customer', title: 'Cliente', description: 'Portal de cliente previsto para una fase posterior.' }));
+  registerAdminRoutes(app, options.db, authenticate, requireRole('admin'));
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) return reply.code(429).send({ error: 'Demasiados intentos. Intenta más tarde.' });
     app.log.error(error);
