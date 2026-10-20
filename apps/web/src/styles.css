@@ -1,0 +1,68 @@
+@import "tailwindcss";
+:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color:#1a2925; background:#f7f9f7; font-synthesis:none; }
+* { box-sizing:border-box; }
+button, input { font:inherit; }
+button { cursor:pointer; }
+.login-shell { min-height:100vh; display:grid; grid-template-columns: 1fr 1fr; }
+.hero-side { background: radial-gradient(ellipse at 20% 90%, #245a49 0%, transparent 60%), #102b24; color:white; padding:48px clamp(36px,6vw,100px); display:flex; flex-direction:column; justify-content:space-between; }
+.brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:25px; letter-spacing:-1.3px; color:#173d31; }
+.brand.light { color:white; }
+.brand-mark { background:#32c78e; display:grid; place-items:center; width:39px; height:39px; color:#0b3528; border-radius:12px; }
+.brand-dot { color:#35c98b; }
+.hero-copy { max-width:560px; padding:70px 0; }
+.eyebrow, .section-kicker { font-size:11px; font-weight:800; letter-spacing:1.8px; }
+.eyebrow { display:flex; align-items:center; gap:10px; color:#b2ead7; }
+.live-dot { display:inline-block; background:#43d59b; width:8px; height:8px; border-radius:50%; vertical-align:middle; }
+.hero-copy h1 { font-size:clamp(43px,5.1vw,76px); font-weight:760; line-height:1.06; letter-spacing:-3.4px; margin:27px 0 22px; }
+.hero-copy h1 em { color:#67deb0; font-style:normal; }
+.hero-copy>p { font-size:17px; line-height:1.75; color:#b3cfc2; max-width:440px; }
+.hero-features { margin-top:48px; display:grid; gap:22px; color:#ddf4e7; font-size:14px; }
+.hero-features>div { display:flex; align-items:center; gap:13px; }
+.hero-features svg { color:#6de0ac; }
+.hero-footer { color:#8fb0a3; font-size:13px; }
+.login-side { display:grid; place-items:center; padding:45px 28px; background:#fcfdfb; }
+.login-card { width:min(100%,400px); }
+.icon-box { width:52px; height:52px; display:grid; place-items:center; border-radius:16px; color:#186a49; background:#e8f7ee; margin-bottom:28px; }
+.section-kicker { color:#2e8666; }
+.login-card h2 { font-size:40px; letter-spacing:-1.6px; margin:10px 0 8px; font-weight:780; }
+.muted, .login-card>p { color:#73817a; line-height:1.65; font-size:14px; }
+.login-card form { margin-top:40px; display:grid; gap:11px; }
+.login-card label { font-size:13px; font-weight:700; margin-top:9px; }
+.login-card input { width:100%; border:1px solid #dce5df; border-radius:12px; padding:15px 16px; outline:none; color:#1e3329; background:white; }
+.login-card input:focus { border-color:#289469; box-shadow:0 0 0 3px #28946922; }
+.primary-btn { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; border:0; border-radius:12px; padding:16px; margin-top:18px; font-weight:700; background:#19734f; color:white; }
+.primary-btn:hover { background:#10583b; }
+.primary-btn:disabled { opacity:.6; cursor:wait; }
+.error { background:#fff2ef; color:#b02f24; padding:10px; border-radius:10px; font-size:13px; }
+.login-card .login-note { display:flex; justify-content:center; align-items:center; gap:7px; text-align:center; font-size:12px; margin-top:26px; color:#8f9b94; }
+.dashboard-shell { min-height:100vh; background:#f7f9f7; }
+.topbar { height:76px; background:white; border-bottom:1px solid #e7ece8; display:flex; align-items:center; justify-content:space-between; padding:0 clamp(20px,5vw,76px); }
+.topbar-right { display:flex; align-items:center; gap:24px; }
+.role-tag { padding:8px 14px; background:#eaf5ee; border-radius:30px; font-size:12px; font-weight:700; color:#24734e; }
+.logout-btn { display:flex; align-items:center; gap:8px; border:0; background:none; color:#667b70; font-size:13px; font-weight:700; }
+.logout-btn:hover { color:#c44335; }
+.dashboard-content { max-width:1200px; margin:0 auto; padding:50px 28px 90px; }
+.breadcrumb { color:#85958b; font-size:13px; }
+.breadcrumb span { margin:0 10px; }
+.welcome { margin:56px 0 32px; }
+.welcome h1 { font-size:clamp(34px,4vw,48px); letter-spacing:-1.8px; font-weight:780; margin:12px 0 8px; }
+.welcome p { color:#718178; font-size:15px; }
+.wave { font-size:32px; }
+.phase-banner { display:flex; align-items:center; gap:18px; background:#e9f5ed; border:1px solid #d2e9db; border-radius:16px; padding:21px 24px; }
+.phase-icon { display:grid; place-items:center; background:#d4eedd; border-radius:12px; color:#24734e; padding:12px; }
+.phase-banner strong { color:#215a3e; }
+.phase-banner p { margin:5px 0 0; color:#5f8972; font-size:13px; }
+.phase-pill { white-space:nowrap; border-radius:20px; border:1px solid #b1d9bd; color:#26704a; padding:7px 10px; margin-left:auto; font-size:10px; font-weight:800; letter-spacing:.5px; }
+.section-heading { display:flex; align-items:center; justify-content:space-between; margin:56px 0 22px; }
+.section-heading h2 { font-size:23px; font-weight:750; letter-spacing:-.5px; }
+.section-heading span { color:#90a095; font-size:13px; }
+.features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.feature-card { background:white; border:1px solid #e8eee9; border-radius:16px; padding:26px; min-height:225px; }
+.feature-icon { width:47px; height:47px; display:grid; place-items:center; border-radius:13px; background:#edf7f0; color:#267952; }
+.feature-card h3 { font-weight:750; font-size:17px; margin:23px 0 6px; }
+.feature-card p { color:#85948a; font-size:13px; min-height:40px; }
+.soon { display:inline-block; margin-top:10px; color:#9a9e98; font-size:11px; font-weight:750; background:#f3f5f2; padding:6px 10px; border-radius:20px; }
+.api-state { margin-top:25px; font-size:12px; color:#668476; }
+.api-state .live-dot { margin-right:5px; }
+.loading { display:grid; place-items:center; height:100vh; color:#2e8060; }
+@media(max-width:850px) { .login-shell { grid-template-columns:1fr; } .hero-side { padding:24px; min-height:220px; } .hero-copy { padding:28px 0 6px; } .hero-copy h1 { font-size:34px; margin:16px 0 8px; letter-spacing:-1.4px; } .hero-copy>p { font-size:13px; } .hero-features,.hero-footer { display:none; } .login-side { padding:45px 22px; } .login-card h2 { font-size:33px; } .features-grid { grid-template-columns:1fr; } .phase-banner { align-items:flex-start; } .phase-pill { display:none; } .dashboard-content { padding:32px 20px 70px; } .welcome { margin:42px 0 25px; } .section-heading span { display:none; } }
