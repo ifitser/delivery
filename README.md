@@ -77,6 +77,19 @@ Entra como administrador a la nueva sección **WhatsApp** para vincular el núme
 
 En **Administrador → WhatsApp**, selecciona mensajes y pulsa **Interpretar mensajes**. Puedes enviar imágenes solo con consentimiento y permiso explícito. Edita las sugerencias y crea el pedido para revisión. Configura `OPENROUTER_API_KEY` para usar `openrouter/free`; Gemini y Groq están deshabilitados por defecto hasta verificar sus planes gratuitos. Consulta [docs/FASE_4.md](docs/FASE_4.md) para información de privacidad, costos y limitaciones.
 
+## Pruebas del sistema completo (local)
+
+La aplicación puede ejecutarse con una sola instancia Node que sirve **frontend y API en el mismo puerto**, usando Docker Compose **solo en localhost**. Sigue [la guía de pruebas locales](docs/PRUEBAS_LOCALES.md) para crear `.env`, levantar la app, verificarla y probar un pedido ficticio de principio a fin.
+
+```bash
+docker compose -f compose.local.yml build
+docker compose -f compose.local.yml run --rm --no-deps -e NODE_ENV=development app node dist/scripts/seed.js
+docker compose -f compose.local.yml up -d
+npm run smoke
+```
+
+Abre **http://localhost:8080**. No conectes un WhatsApp comercial ni introduzcas datos reales antes de configurar HTTPS, un servidor seguro y un repositorio privado.
+
 ## Próximo paso
 
 Realizar pruebas reales de WhatsApp y de las APIs elegidas en un servidor de desarrollo seguro, antes de utilizar información de clientes.

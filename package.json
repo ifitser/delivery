@@ -14,7 +14,8 @@
     "typecheck": "npm run typecheck -w @delivery/api && npm run typecheck -w @delivery/web",
     "db:migrate": "npm run db:migrate -w @delivery/api",
     "db:seed": "npm run db:seed -w @delivery/api",
-    "db:backup": "npm run db:backup -w @delivery/api"
+    "db:backup": "npm run db:backup -w @delivery/api",
+    "smoke": "node scripts/smoke.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

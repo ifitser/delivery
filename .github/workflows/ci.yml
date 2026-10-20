@@ -19,3 +19,16 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+
+      - name: Smoke test del servidor empaquetado
+        run: |
+          export JWT_SECRET="CI_SOLO_PRUEBA_012345678901234567890123456789"
+          export API_PORT=3917
+          export DATABASE_PATH=../../data/ci.sqlite
+          export DELIVERY_SERVE_WEB=true
+          export WEB_ORIGIN=http://localhost:3917
+          export WHATSAPP_RESUME=false
+          npm run start -w @delivery/api > /tmp/delivery-api.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          node scripts/smoke.mjs http://127.0.0.1:3917 || { cat /tmp/delivery-api.log; exit 1; }
