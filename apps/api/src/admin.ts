@@ -140,7 +140,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, authenticate: 
     if(!current) return err(reply,404,'Jornada no encontrada');
     if (current.status==='finalizada' || current.status==='cancelada') return err(reply,409,'Jornada cerrada');
     const next={...current,...input};
-    if(!validDatePair(next.purchase_date,next.cutoff_at)) return err(reply,400,'La fecha límite debe ser anterior o igual a la compra');
+    if(!validDatePair(String(next.purchase_date),String(next.cutoff_at))) return err(reply,400,'La fecha límite debe ser anterior o igual a la compra');
     if(next.buyer_id && !hasBuyer.get(next.buyer_id)) return err(reply,400,'Comprador no disponible');
     db.prepare('UPDATE shopping_days SET store=?,purchase_date=?,cutoff_at=?,buyer_id=?,status=? WHERE id=?')
       .run(next.store,next.purchase_date,next.cutoff_at,next.buyer_id,next.status,id);
