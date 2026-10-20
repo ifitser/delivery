@@ -2,8 +2,8 @@ import '@fastify/jwt';
 export type UserRole = 'admin' | 'buyer' | 'customer';
 declare module '@fastify/jwt' {
   interface FastifyJWT {
-    payload: { sub: number; role: UserRole; email: string };
-    user: { sub: number; role: UserRole; email: string; iat?: number; exp?: number };
+    payload: { sub: string; role: UserRole; email: string };
+    user: { sub: string; role: UserRole; email: string; iat?: number; exp?: number };
   }
 }
 export interface UserRecord {
