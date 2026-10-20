@@ -48,7 +48,7 @@ test('Fase 2: comprador sólo ve asignaciones, consulta alternativas y finaliza 
 
     const newPhoto=await request('POST','/api/admin/items/'+a+'/images',adminToken,{
       filename:'original.jpg',mime_type:'image/jpeg',
-      base64:Buffer.from([255,216,255,224,1,2,3,255,217]).toString('base64'),
+      base64:Buffer.concat([Buffer.from([255,216,255,224]),Buffer.alloc(20),Buffer.from([255,217])]).toString('base64'),
     });
     assert.equal(newPhoto.statusCode,201,newPhoto.body);
     const originalId=newPhoto.json().id as number;
@@ -77,13 +77,13 @@ test('Fase 2: comprador sólo ve asignaciones, consulta alternativas y finaliza 
 
     const alternativePhoto=await request('POST','/api/buyer/consultations/'+cid+'/images',buyerToken,{
       filename:'alternativa.png',mime_type:'image/png',
-      base64:Buffer.from([137,80,78,71,13,10,26,10,5,6,7,8]).toString('base64'),
+      base64:Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),Buffer.alloc(20)]).toString('base64'),
     });
     assert.equal(alternativePhoto.statusCode,201,alternativePhoto.body);
     const altId=alternativePhoto.json().id as number;
     photoPaths.push((db.prepare('SELECT storage_path FROM attachments WHERE id=?').get(altId) as {storage_path:string}).storage_path);
     assert.equal((await request('POST','/api/buyer/consultations/'+cid+'/images',secondToken,{
-      filename:'otra.png',mime_type:'image/png',base64:Buffer.from([137,80,78,71,13,10,26,10,1,2,3,4]).toString('base64')})).statusCode,404);
+      filename:'otra.png',mime_type:'image/png',base64:Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),Buffer.alloc(20)]).toString('base64')})).statusCode,404);
     assert.equal((await request('GET','/api/admin/images/'+altId,adminToken)).statusCode,200);
     assert.equal((await request('GET','/api/buyer/images/'+altId,buyerToken)).statusCode,200);
     const consultList=await request('GET','/api/admin/consultations',adminToken);
