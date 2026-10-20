@@ -224,7 +224,11 @@ export function registerAdminConsultationRoutes(app:FastifyInstance,db:Db,authen
       (SELECT r.decision FROM consultation_responses r WHERE r.consultation_id=c.id ORDER BY r.id DESC LIMIT 1) latest_decision
       FROM consultations c JOIN order_items i ON i.id=c.item_id JOIN orders o ON o.id=i.order_id
       JOIN customers cust ON cust.id=o.customer_id JOIN shopping_days d ON d.id=o.shopping_day_id
-      ORDER BY CASE WHEN c.status='pendiente' THEN 0 ELSE 1 END,c.id DESC LIMIT 200`).all(),
+      ORDER BY CASE WHEN c.status='pendiente' THEN 0 ELSE 1 END,c.id DESC LIMIT 200`).all().map((consultation:unknown)=>{
+        const row=consultation as {id:number};
+        const images=db.prepare('SELECT id, original_name FROM attachments WHERE consultation_id=? ORDER BY id').all(row.id);
+        return {...row,images};
+      }),
   }));
   app.post('/api/admin/consultations/:id/respond',secured,async(request,reply)=>{
     const id=identifier(request,reply);if(!id)return;
