@@ -1,0 +1,17 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+data/
+backups/
+apps/api/storage/*
+!apps/api/storage/uploads/
+apps/api/storage/uploads/*
+!apps/api/storage/uploads/.gitkeep
+.DS_Store
