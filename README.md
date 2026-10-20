@@ -2,7 +2,7 @@
 
 Base técnica para coordinar jornadas y pedidos de **Costco** y **Sam's Club**. La plataforma incluirá tres roles (administrador, comprador y cliente), y en fases posteriores recibirá pedidos desde WhatsApp.
 
-> **Estado actual: Fase 0.** Inicio de sesión, acceso por rol, estructura de API, base de datos, migraciones y respaldo. **Todavía no** hay gestión de jornadas ni WhatsApp ni interpretación con IA.
+> **Estado actual: Fases 0 y 1.** Inicio de sesión por rol; el panel de administrador permite gestionar clientes, jornadas, pedidos manuales, artículos, imágenes y asignación de compradores. **Todavía no** hay integración con WhatsApp ni IA.
 
 ## Requisitos
 
@@ -61,8 +61,12 @@ docs/
   ci.yml                # Build y pruebas
 ```
 
+## Fase 1 — Cómo empezar
+
+Entra con la cuenta de administrador, registra un cliente, programa una jornada y crea un pedido. Abre el pedido para agregar sus artículos y fotos, luego confírmalo. Consulta [docs/FASE_1.md](docs/FASE_1.md) para las operaciones y sus límites.
+
 ## Siguiente fase
 
-**Fase 1:** gestión manual de clientes, jornadas y pedidos, subida de fotos y asignación a compradores. WhatsApp por QR e IA vienen después; ambos son opcionales para operar.
+**Fase 2:** panel móvil del comprador para consultar listas y actualizar artículos durante la compra. WhatsApp por QR e IA vienen después; ambos siguen siendo opcionales.
 
 **Seguridad:** este repositorio está público actualmente. Cámbialo a **privado** antes de usar datos o números telefónicos reales. No publiques `.env` ni la base de datos. El prototipo local no está listo para exposición pública a Internet.
