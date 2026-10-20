@@ -48,18 +48,18 @@ export function redactSensitive(text:string):string{
 }
 export function textFallback(text:string,id:number):Suggestion[]{
   const lines=text.replace(/\r/g,'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean).slice(0,25);
-  return lines.map(line=>{
+  return lines.flatMap((line):Suggestion[]=>{
     const prefix=/^(?:[-*•]\s*)?(\d{1,3})\s*(?:x|×|pzas?\.?|unidades?|uds?\.?)\s+(.+)$/i.exec(line);
     const suffix=/^(.+?)\s+[x×]\s*(\d{1,3})$/i.exec(line);
     const qty=prefix?Number(prefix[1]):suffix?Number(suffix[2]):1;
     const description=(prefix?prefix[2]:suffix?suffix[1]:line).replace(/^(?:[-*•]\s*)/,'').trim().slice(0,300);
-    if(description.length<2||qty<1||qty>999)return null;
+    if(description.length<2||qty<1||qty>999)return [];
     const match=description.match(/https?:\/\/\S+/);
-    return {
+    return [{
       source_message_ids:[id],description:match?description.replace(match[0],'').trim()||'Producto en enlace':description,
-      quantity:qty,notes:null,product_url:match?match[0]:null,confidence:'baja' as const,
-    };
-  }).filter((v):v is Suggestion=>v!==null);
+      quantity:qty,notes:null,product_url:match?match[0]:null,confidence:'baja',
+    }];
+  });
 }
 function normalizeResponse(value:unknown,ids:Set<number>):Suggestion[]{
   const parsed=responseSchema.safeParse(value);
