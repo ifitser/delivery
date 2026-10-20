@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CheckCircle2, Clock3, MessageSquareText, RefreshCw, Send } from 'lucide-react';
 
-type Consultation={id:number;item_id:number;question:string;alternative_description:string|null;estimated_price_cents:number|null;status:string;created_at:string;product_description:string;quantity:number;customer_name:string;store:string;purchase_date:string;latest_response:string|null;latest_decision:string|null};
+type Consultation={id:number;item_id:number;question:string;alternative_description:string|null;estimated_price_cents:number|null;status:string;created_at:string;product_description:string;quantity:number;customer_name:string;store:string;purchase_date:string;latest_response:string|null;latest_decision:string|null;images:{id:number;original_name:string|null}[]};
 async function api<T>(path:string,token:string,init:RequestInit={}):Promise<T>{
   const result=await fetch((import.meta.env.VITE_API_URL??'')+'/api/admin'+path,{...init,
     headers:{Authorization:'Bearer '+token,...(init.body?{'Content-Type':'application/json'}:{}),...init.headers}});
@@ -10,6 +10,19 @@ async function api<T>(path:string,token:string,init:RequestInit={}):Promise<T>{
   return data as T;
 }
 const store=(s:string)=>s==='costco'?'Costco':"Sam's Club";
+function AlternativePhoto({id,name,token}:{id:number;name:string;token:string}){
+  const [src,setSrc]=useState('');
+  useEffect(()=>{
+    let alive=true;
+    api<{mime_type:string;base64:string}>('/images/'+id,token)
+      .then(v=>{if(alive)setSrc('data:'+v.mime_type+';base64,'+v.base64);}).catch(()=>{});
+    return()=>{alive=false;};
+  },[id,token]);
+  return src?<a href={src} target="_blank" rel="noreferrer" title={name}>
+    <img src={src} alt={name} className="d-alternative-photo"/>
+  </a>:<span className="d-alternative-placeholder">Cargando imagen…</span>;
+}
+
 export default function AdminConsultations({token}:{token:string}){
   const [items,setItems]=useState<Consultation[]>([]);
   const [current,setCurrent]=useState<number|null>(null);
@@ -44,7 +57,8 @@ export default function AdminConsultations({token}:{token:string}){
         <h3>{c.product_description}</h3><p className="d-consult-meta">{c.customer_name} · {store(c.store)} · {c.quantity} unidades</p>
         <div className="d-consult-question"><b>Pregunta del comprador</b><p>{c.question}</p>
         {c.alternative_description&&<p><b>Alternativa:</b> {c.alternative_description}</p>}
-        {c.estimated_price_cents!==null&&<p><b>Precio aproximado:</b> {(c.estimated_price_cents/100).toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</p>}</div>
+        {c.estimated_price_cents!==null&&<p><b>Precio aproximado:</b> {(c.estimated_price_cents/100).toLocaleString('es-MX',{style:'currency',currency:'MXN'})}</p>}
+        {!!c.images?.length&&<div className="d-alternative-images">{c.images.map(photo=><AlternativePhoto key={photo.id} id={photo.id} name={photo.original_name||'Alternativa'} token={token}/>)}</div>}</div>
         {current===c.id?<form className="d-consult-form" onSubmit={e=>void reply(e,c.id)}>
           <label>Decisión del cliente<select name="decision" defaultValue="aceptar" required><option value="aceptar">Acepta alternativa</option><option value="rechazar">Rechaza alternativa</option><option value="pregunta">Solicita más información</option></select></label>
           <label>Respuesta que dio el cliente<textarea name="response" required minLength={2} maxLength={1200} placeholder="Transcribe la respuesta del cliente..."/></label>
