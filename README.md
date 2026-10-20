@@ -73,8 +73,12 @@ Inicia sesión con el usuario **comprador** asignado a una jornada. Desde su pan
 
 Entra como administrador a la nueva sección **WhatsApp** para vincular el número por QR. Los mensajes nuevos (texto/fotografías) se guardan en una bandeja, se identifican por número si es posible y pueden convertirse en pedidos **pendientes de revisión**. Lee [docs/FASE_3.md](docs/FASE_3.md) antes de vincular un número real. La integración es **no oficial** y puede desconectarse o sufrir restricciones.
 
-## Próxima fase
+## Fase 4 — IA gratuita opcional
 
-Interpretación opcional de mensajes e imágenes con proveedores de IA gratuitos, siempre con validación humana.
+En **Administrador → WhatsApp**, selecciona mensajes y pulsa **Interpretar mensajes**. Puedes enviar imágenes solo con consentimiento y permiso explícito. Edita las sugerencias y crea el pedido para revisión. Configura `OPENROUTER_API_KEY` para usar `openrouter/free`; Gemini y Groq están deshabilitados por defecto hasta verificar sus planes gratuitos. Consulta [docs/FASE_4.md](docs/FASE_4.md) para información de privacidad, costos y limitaciones.
+
+## Próximo paso
+
+Realizar pruebas reales de WhatsApp y de las APIs elegidas en un servidor de desarrollo seguro, antes de utilizar información de clientes.
 
 **Seguridad:** este repositorio está público actualmente. Cámbialo a **privado** antes de usar datos o números telefónicos reales. No publiques `.env` ni la base de datos. El prototipo local no está listo para exposición pública a Internet.
