@@ -7,6 +7,7 @@ import type { Db } from './db.js';
 const uploadDir = resolve(process.cwd(), 'storage/uploads');
 export const itemSchema=z.object({
   message_id:z.number().int().positive(),
+  source_message_ids:z.array(z.number().int().positive()).min(1).max(10).optional(),
   description:z.string().trim().min(2).max(2000),
   quantity:z.number().int().min(1).max(999),
   notes:z.string().trim().max(1200).nullable().optional(),
@@ -15,8 +16,10 @@ export const itemSchema=z.object({
 export const convertSchema=z.object({
   shopping_day_id:z.number().int().positive(),customer_id:z.number().int().positive(),
   items:z.array(itemSchema).min(1).max(100),
-}).strict().refine(data=>new Set(data.items.map(i=>i.message_id)).size===data.items.length,
-  'No repitas mensajes dentro de un mismo pedido');
+}).strict().refine(data=>data.items.every(item=>
+    !item.source_message_ids || (item.source_message_ids.includes(item.message_id) &&
+      new Set(item.source_message_ids).size===item.source_message_ids.length)),
+  'Una línea debe incluir su mensaje principal y no repetir fuentes');
 
 export function onlyDigits(value:string|null|undefined){return (value??'').replace(/\D/g,'');}
 export function senderPhone(remoteJid:string):string|null{
@@ -100,11 +103,12 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
   const copies:string[]=[];
   try{
     const order=db.transaction(()=>{
-      for(const item of input.items){
-        const msg=db.prepare("SELECT id,customer_id,status FROM inbound_messages WHERE id=?").get(item.message_id) as
+      const ids=[...new Set(input.items.flatMap(item=>item.source_message_ids??[item.message_id]))];
+      for(const messageId of ids){
+        const msg=db.prepare("SELECT id,customer_id,status FROM inbound_messages WHERE id=?").get(messageId) as
           {id:number;customer_id:number|null;status:string}|undefined;
         if(!msg||!['pendiente','error_media'].includes(msg.status)||msg.customer_id!==input.customer_id)
-          throw new InboxError(409,'Los mensajes deben estar pendientes y pertenecer al mismo cliente');
+          throw new InboxError(409,'Todos los mensajes deben estar pendientes y pertenecer al mismo cliente');
       }
       const result=db.prepare(`INSERT INTO orders(customer_id,shopping_day_id,source,status,notes)
         VALUES (?,?,'whatsapp','pendiente_revision','Recibido desde WhatsApp; revisar antes de confirmar')`)
@@ -114,8 +118,9 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
         const added=db.prepare(`INSERT INTO order_items(order_id,description,quantity,notes,product_url)
           VALUES(?,?,?,?,?)`).run(orderId,item.description,item.quantity,item.notes||null,item.product_url||null);
         const itemId=Number(added.lastInsertRowid);
-        const attachments=db.prepare('SELECT storage_path,mime_type,original_name FROM attachments WHERE message_id=?')
-          .all(item.message_id) as {storage_path:string;mime_type:string;original_name:string|null}[];
+        const sources=item.source_message_ids??[item.message_id];
+        const attachments=sources.flatMap(source=>db.prepare('SELECT storage_path,mime_type,original_name FROM attachments WHERE message_id=?')
+          .all(source) as {storage_path:string;mime_type:string;original_name:string|null}[]);
         for(const photo of attachments){
           if(!/^[a-f0-9-]{36}\.(jpg|png|webp)$/.test(photo.storage_path))continue;
           const extension=photo.storage_path.split('.').pop()!;
@@ -125,8 +130,10 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
           db.prepare('INSERT INTO attachments(order_item_id,storage_path,mime_type,original_name) VALUES(?,?,?,?)')
             .run(itemId,copy,photo.mime_type,photo.original_name);
         }
+      }
+      for(const messageId of ids){
         db.prepare("UPDATE inbound_messages SET status='convertido',order_id=? WHERE id=? AND status IN ('pendiente','error_media')")
-          .run(orderId,item.message_id);
+          .run(orderId,messageId);
       }
       return orderId;
     })();
