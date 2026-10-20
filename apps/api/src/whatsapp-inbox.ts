@@ -29,6 +29,13 @@ export function matchedCustomer(db:Db,phone:string|null):number|null{
   const found=rows.filter(row=>onlyDigits(row.phone)===phone);
   return found.length===1?found[0].id:null;
 }
+function hasImageSignature(data:Buffer,mime:string):boolean{
+  if(mime==='image/jpeg')return data.length>4&&data[0]===255&&data[1]===216&&data[2]===255;
+  if(mime==='image/png')return data.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
+  if(mime==='image/webp')return data.length>12&&data.toString('ascii',0,4)==='RIFF'
+    &&data.toString('ascii',8,12)==='WEBP';
+  return false;
+}
 export type Incoming={
   externalId:string;remoteJid:string;body:string|null;
   kind:'text'|'image';receivedAt:string;image?:{bytes:Buffer;mimeType:string};
@@ -42,7 +49,7 @@ export function ingest(db:Db,input:Incoming):{inserted:boolean;id:number|null}{
   const mime=input.image?.mimeType;
   const extensions:Record<string,string>={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
   const accepted=input.image&&mime&&extensions[mime]&&input.image.bytes.length<=4*1024*1024
-    &&input.image.bytes.length>0;
+    &&input.image.bytes.length>0&&hasImageSignature(input.image.bytes,mime);
   const filename=accepted?randomUUID()+'.'+extensions[mime]:null;
   const status=input.kind==='image'&&!filename?'error_media':'pendiente';
   try{
