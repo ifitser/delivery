@@ -64,7 +64,7 @@ test('Fase 3: bandeja idempotente, identificación, fotos y conversión sin IA',
     assert.equal((await call('POST','/api/admin/whatsapp/convert',admin,{
       customer_id:customerId,shopping_day_id:dayId,
       items:[{message_id:first.id,description:'Café de prueba',quantity:2},
-        {message_id:first.id,description:'Duplicado',quantity:1}],
+        {message_id:first.id,source_message_ids:[first.id,first.id],description:'Duplicado',quantity:1}],
     })).statusCode,400);
     assert.equal((await call('POST','/api/admin/whatsapp/convert',admin,{
       customer_id:customerId,shopping_day_id:dayId,
