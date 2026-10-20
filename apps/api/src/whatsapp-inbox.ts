@@ -101,8 +101,8 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
   try{
     const order=db.transaction(()=>{
       for(const item of input.items){
-        const msg=db.prepare("SELECT id,customer_id,status FROM inbound_messages WHERE id=?").get(item.message_id)
-          as {id:number;customer_id:number|null;status:string}|undefined;
+        const msg=db.prepare("SELECT id,customer_id,status FROM inbound_messages WHERE id=?").get(item.message_id) as
+          {id:number;customer_id:number|null;status:string}|undefined;
         if(!msg||!['pendiente','error_media'].includes(msg.status)||msg.customer_id!==input.customer_id)
           throw new InboxError(409,'Los mensajes deben estar pendientes y pertenecer al mismo cliente');
       }
