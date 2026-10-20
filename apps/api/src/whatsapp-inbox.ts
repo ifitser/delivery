@@ -118,7 +118,7 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
           db.prepare('INSERT INTO attachments(order_item_id,storage_path,mime_type,original_name) VALUES(?,?,?,?)')
             .run(itemId,copy,photo.mime_type,photo.original_name);
         }
-        db.prepare("UPDATE inbound_messages SET status='convertido',order_id=? WHERE id=? AND status='pendiente'")
+        db.prepare("UPDATE inbound_messages SET status='convertido',order_id=? WHERE id=? AND status IN ('pendiente','error_media')")
           .run(orderId,item.message_id);
       }
       return orderId;
