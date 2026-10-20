@@ -13,8 +13,14 @@ export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string
   app.register(jwt, { secret: options.jwtSecret, sign: { expiresIn: '8h' } });
   app.register(rateLimit, { global: false });
   const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
-    try { await request.jwtVerify(); }
-    catch { return reply.code(401).send({ error: 'Sesión inválida o caducada' }); }
+    try {
+      await request.jwtVerify();
+      const current = options.db.prepare('SELECT id, role FROM users WHERE id = ? AND active = 1')
+        .get(Number(request.user.sub)) as { id: number; role: UserRole } | undefined;
+      if (!current || current.role !== request.user.role) {
+        return reply.code(401).send({ error: 'Cuenta inactiva o sesión desactualizada' });
+      }
+    } catch { return reply.code(401).send({ error: 'Sesión inválida o caducada' }); }
   };
   const requireRole = (role: UserRole) => async (request: FastifyRequest, reply: FastifyReply) => {
     if (request.user.role !== role) return reply.code(403).send({ error: 'Acceso no autorizado' });
@@ -29,11 +35,11 @@ export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string
       .get(email.toLowerCase()) as UserRecord | undefined;
     if (!user || !(await bcrypt.compare(password, user.password_hash)))
       return reply.code(401).send({ error: 'Credenciales incorrectas' });
-    return { token: app.jwt.sign({ sub: user.id, role: user.role, email: user.email }), user: publicUser(user) };
+    return { token: app.jwt.sign({ sub: String(user.id), role: user.role, email: user.email }), user: publicUser(user) };
   });
   app.get('/api/auth/me', { preHandler: [authenticate] }, async (request, reply) => {
     const user = options.db.prepare('SELECT * FROM users WHERE id = ? AND active = 1')
-      .get(request.user.sub) as UserRecord | undefined;
+      .get(Number(request.user.sub)) as UserRecord | undefined;
     if (!user) return reply.code(401).send({ error: 'Cuenta inactiva' });
     return { user: publicUser(user) };
   });
@@ -44,7 +50,7 @@ export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string
   app.get('/api/customer/overview', { preHandler: [authenticate, requireRole('customer')] },
     async () => ({ role: 'customer', title: 'Cliente', description: 'Portal de cliente previsto para una fase posterior.' }));
   app.setErrorHandler((error, _request, reply) => {
-    if (error.statusCode === 429) return reply.code(429).send({ error: 'Demasiados intentos. Intenta más tarde.' });
+    if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) return reply.code(429).send({ error: 'Demasiados intentos. Intenta más tarde.' });
     app.log.error(error);
     return reply.code(500).send({ error: 'Error interno del servidor' });
   });
