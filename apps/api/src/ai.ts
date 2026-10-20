@@ -39,6 +39,13 @@ export type ProviderRequest={
 };
 export type ProviderTransport=(request:ProviderRequest)=>Promise<AiResponse>;
 
+// Ocultamos identificadores evidentes; un administrador debe revisar también las fotos.
+export function redactSensitive(text:string):string{
+  return text
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[correo omitido]')
+    .replace(/(?:\+?\d[\d .()-]{8,}\d)/g,'[teléfono omitido]')
+    .replace(/\b(?:calle|av\.|avenida|dirección|domicilio)\s+[^,;\n]{4,80}/gi,'[dirección omitida]');
+}
 export function textFallback(text:string,id:number):Suggestion[]{
   const lines=text.replace(/\r/g,'').split(/[\n;,]+/).map(x=>x.trim()).filter(Boolean).slice(0,25);
   return lines.map(line=>{
@@ -156,7 +163,7 @@ export async function interpret(
   options:{env?:NodeJS.ProcessEnv;transport?:ProviderTransport;now?:()=>Date}={},
 ):Promise<InterpretResult>{
   const rows=getMessages(db,values.message_ids);
-  const messages=rows.map(r=>({id:r.id,body:(r.body||'').slice(0,2500)}));
+  const messages=rows.map(r=>({id:r.id,body:redactSensitive((r.body||'').slice(0,2500))}));
   const img=imagesFor(db,rows,values.send_images);
   const missingImages=rows.filter(r=>r.kind==='image').length-img.length;
   const key=createHash('sha256').update(JSON.stringify({messages,send_images:values.send_images,images:img.map(i=>i.message_id)})).digest('hex');
@@ -167,7 +174,7 @@ export async function interpret(
   const now=options.now??(()=>new Date());
   const transport=options.transport??defaultTransport;
   const day=now().toISOString().slice(0,10);
-  const fallback=()=>rows.flatMap(r=>textFallback(r.body??'',r.id)).slice(0,50);
+  const fallback=()=>rows.flatMap(r=>textFallback(redactSensitive(r.body??''),r.id)).slice(0,50);
   const candidates=providersAvailable(env);
   const used=new Set(values.message_ids);
   for(const p of candidates){
