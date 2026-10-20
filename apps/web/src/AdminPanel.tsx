@@ -123,7 +123,7 @@ export default function AdminPanel({user,token,onLogout}:Props){
   async function uploadPhoto(item:number,file:File){
     if(file.size>4*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type)){setError('Solo JPG, PNG o WebP de hasta 4 MB');return;}
     setPhotoBusy(item);
-    await action(()=>request('/items/'+item+'/images',token,{method:'POST',body:JSON.stringify({filename:file.name,mime_type:file.type,base64:await toBase64(file)})}),'Fotografía guardada');
+    await action(async()=>request('/items/'+item+'/images',token,{method:'POST',body:JSON.stringify({filename:file.name,mime_type:file.type,base64:await toBase64(file)})}),'Fotografía guardada');
     setPhotoBusy(null);
   }
   async function confirmOrder(id:number){
