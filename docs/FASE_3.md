@@ -54,7 +54,7 @@ No uses el QR ni las credenciales fuera de una sesión administrativa protegida.
 | Ubicación | Contenido | Git |
 |---|---|---|
 | `data/delivery.sqlite` | Clientes, mensajes, artículos, relaciones | Ignorado |
-| `data/whatsapp-auth` | Credenciales cifradas/llaves de sesión de WhatsApp | Ignorado; no compartir |
+| `data/whatsapp-auth` | Claves de sesión de WhatsApp (sensibles; sin cifrado adicional en disco) | Ignorado; no compartir |
 | `apps/api/storage/uploads/` | Fotografías originales y copias de pedidos | Ignorado |
 
 - **Respaldo:** `npm run db:backup` respalda SQLite y fotografías, pero **no** las credenciales WhatsApp. Si se pierde la sesión, escanea el QR de nuevo.
