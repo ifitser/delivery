@@ -56,3 +56,22 @@
 .wa-disclaimer{font-size:12px;line-height:1.6;color:#92a296}
 @media(max-width:1100px){.wa-layout{grid-template-columns:1fr}.wa-convert{position:static;max-height:none}}
 @media(max-width:720px){.wa-inbox-head{align-items:flex-start;flex-direction:column}.wa-connection{padding:18px}.wa-message{padding:17px}.wa-convert{padding:18px}.wa-scan{padding:10px}.wa-scan img{width:220px}}
+
+.wa-ai-box{border:1px solid #cfe7da;background:#f0f9f2;border-radius:12px;padding:16px;display:grid;gap:12px}
+.wa-ai-heading{display:flex;gap:8px;align-items:center;color:#217b4e;font-size:14px}
+.wa-ai-box>p{margin:0;color:#698975;font-size:12px;line-height:1.5}
+.wa-ai-box>small{color:#7e9989;font-size:11px;line-height:1.55}
+.wa-ai-choice{display:flex!important;align-items:flex-start;flex-direction:row!important;gap:9px!important;line-height:1.4}
+.wa-ai-choice input{width:16px!important;height:16px!important;flex-shrink:0;margin-top:2px}
+.wa-ai-button{display:flex;gap:8px;align-items:center;justify-content:center;background:#257f55;color:#fff;border:0;border-radius:10px;padding:12px;font-weight:800;font-size:13px}
+.wa-ai-button:disabled{opacity:.5;cursor:not-allowed}
+.wa-ai-providers{display:flex;gap:5px;flex-wrap:wrap}
+.wa-ai-providers span{background:#e1eee5;border-radius:14px;font-size:10px;color:#4f7e60;padding:5px 7px}
+.wa-ai-result{border-top:1px solid #d2e9d8;padding-top:10px;display:grid;gap:6px}
+.wa-ai-result b{font-size:13px;color:#1b7c49}.wa-ai-result p{margin:0;font-size:11px;color:#62846d}
+.wa-ai-result small{font-size:11px;color:#7c907e;line-height:1.5}
+.wa-clear-ai{border:0;background:none;color:#287755;justify-self:start;font-weight:700;font-size:12px;padding:5px 0}
+.wa-confidence{font-size:10px;color:#927642;background:#fff3dc;border-radius:12px;padding:4px 7px;margin-left:auto}
+.wa-confidence.wa-alta{background:#e3f4e9;color:#1b7b4c}
+.wa-confidence.wa-media{background:#ebeffe;color:#4265a3}
+.wa-add-line{background:white;border:1px dashed #c9decf;border-radius:10px;padding:11px;color:#35825c;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:750}
