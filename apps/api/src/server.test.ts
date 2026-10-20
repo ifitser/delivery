@@ -28,5 +28,7 @@ test('login, permisos por rol y sesión', async () => {
     const buyerAuth = { authorization: 'Bearer ' + buyerLogin.json().token };
     assert.equal((await app.inject({ url: '/api/buyer/overview', headers: buyerAuth })).statusCode, 200);
     assert.equal((await app.inject({ url: '/api/admin/overview', headers: buyerAuth })).statusCode, 403);
+    db.prepare('UPDATE users SET active = 0 WHERE email = ?').run('admin@test.local');
+    assert.equal((await app.inject({ url: '/api/admin/overview', headers: auth })).statusCode, 401);
   } finally { await app.close(); db.close(); }
 });
