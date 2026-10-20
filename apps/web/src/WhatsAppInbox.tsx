@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Archive, CheckCircle2, ClipboardList, Image, Link2, MessageCircle, QrCode, RefreshCw, ShieldAlert, Smartphone, Unplug, X } from 'lucide-react';
+import { Archive, CheckCircle2, ClipboardList, Image, Link2, MessageCircle, QrCode, RefreshCw, ShieldAlert, Smartphone, Unplug, X, Sparkles, Plus, Trash2 } from 'lucide-react';
 import './whatsapp.css';
 
 type Connection={status:'disconnected'|'connecting'|'qr'|'connected'|'reconnecting'|'error';qr_image:string|null;message:string|null};
@@ -7,6 +7,12 @@ type Customer={id:number;name:string;phone:string|null};
 type Day={id:number;store:string;purchase_date:string;status:string};
 type InboxMessage={id:number;customer_id:number|null;customer_name:string|null;body:string|null;received_at:string;status:string;kind:string;sender_phone:string|null;remote_jid:string|null;order_id:number|null;image_id:number|null;image_count:number};
 type Editable={message_id:number;description:string;quantity:number;notes:string;product_url:string};
+type AiLine=Editable&{uid:number;source_message_ids:number[];confidence:'alta'|'media'|'baja'};
+type AiResult={provider:string;model:string|null;cached:boolean;warning:string|null;items:Array<{
+  source_message_ids:number[];description:string;quantity:number;notes:string|null;
+  product_url:string|null;confidence:'alta'|'media'|'baja';
+}>};
+type Provider={name:string;configured:boolean;vision:boolean;daily_limit:number;used_today:number};
 const isPending=(s:string)=>s==='pendiente'||s==='error_media';
 const initialStatus:Connection={status:'disconnected',qr_image:null,message:null};
 const labels:Record<Connection['status'],string>={disconnected:'Desconectado',connecting:'Conectando',qr:'Esperando escaneo QR',connected:'Conectado',reconnecting:'Reconectando',error:'Error de conexión'};
@@ -34,6 +40,11 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
   const [days,setDays]=useState<Day[]>([]);
   const [selected,setSelected]=useState<number[]>([]);
   const [edits,setEdits]=useState<Record<number,Editable>>({});
+  const [suggestions,setSuggestions]=useState<AiLine[]|null>(null);
+  const [aiInfo,setAiInfo]=useState<{provider:string;model:string|null;cached:boolean;warning:string|null}|null>(null);
+  const [providers,setProviders]=useState<Provider[]>([]);
+  const [sendImages,setSendImages]=useState(false);
+  const [aiBusy,setAiBusy]=useState(false);
   const [customerId,setCustomerId]=useState<number|null>(null);
   const [dayId,setDayId]=useState<number|null>(null);
   const [busy,setBusy]=useState(false);
@@ -42,6 +53,10 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
   const [showArchive,setShowArchive]=useState(false);
   const [assignments,setAssignments]=useState<Record<number,number>>({});
   const status=useCallback(async()=>setConnection(await getApi<Connection>(token,'/whatsapp/status')),[token]);
+  const refreshProviders=useCallback(async()=>{
+    const result=await getApi<{providers:Provider[]}>(token,'/ai/providers');
+    setProviders(result.providers);
+  },[token]);
   const reload=useCallback(async()=>{
     const [list,c,d]=await Promise.all([
       getApi<{messages:InboxMessage[]}>(token,'/whatsapp/inbox'),
@@ -53,21 +68,23 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
   useEffect(()=>{
     void status().catch(e=>setError(String(e)));
     void reload().catch(e=>setError(String(e)));
+    void refreshProviders().catch(()=>{});
     const timer=setInterval(()=>{
       void status().catch(()=>{});
       void reload().catch(()=>{});
     },5000);
     return()=>clearInterval(timer);
-  },[status,reload]);
+  },[status,reload,refreshProviders]);
   const pending=messages.filter(m=>isPending(m.status));
   const visible=messages.filter(m=>isPending(m.status)||(showArchive&&m.status==='archivado'));
   const selectedMessages=useMemo(()=>messages.filter(m=>selected.includes(m.id)&&isPending(m.status)),[selected,messages]);
   const selectionCustomer=selectedMessages.length&&selectedMessages.every(m=>m.customer_id===selectedMessages[0].customer_id)
     ?selectedMessages[0].customer_id:null;
   useEffect(()=>{setCustomerId(selectionCustomer);},[selectionCustomer]);
-  const ready=selectedMessages.length>0&&selectionCustomer!==null&&dayId!==null&&selectedMessages.every(m=>{
-    const v=edits[m.id];return Boolean(v?.description?.trim()&&v.quantity>=1);
-  });
+  const rowsToConvert=suggestions??selectedMessages.map(m=>edits[m.id]).filter((x):x is Editable=>Boolean(x));
+  const ready=selectedMessages.length>0&&selectionCustomer!==null&&dayId!==null&&rowsToConvert.length>0&&rowsToConvert.every(v=>
+    Boolean(v?.description?.trim()&&Number.isInteger(v.quantity)&&v.quantity>=1&&v.quantity<=999)
+  );
   async function perform(callback:()=>Promise<unknown>,success:string){
     setError('');setNotice('');setBusy(true);
     try{await callback();await reload();await status();setNotice(success);}
@@ -76,6 +93,8 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
   }
   function toggle(message:InboxMessage){
     if(!isPending(message.status))return;
+    if(!selected.includes(message.id)&&selected.length>=10){setError('La IA procesa hasta 10 mensajes a la vez');return;}
+    setSuggestions(null);setAiInfo(null);
     setSelected(old=>old.includes(message.id)?old.filter(i=>i!==message.id):[...old,message.id]);
     setEdits(old=>({...old,[message.id]:old[message.id]??{
       message_id:message.id,description:message.body||'',quantity:1,notes:'',product_url:'',
@@ -83,6 +102,36 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
   }
   function edit(id:number,key:keyof Editable,value:string|number){
     setEdits(old=>({...old,[id]:{...old[id],[key]:value}}));
+  }
+  function editSuggestion(uid:number,key:keyof Editable,value:string|number){
+    setSuggestions(old=>old?.map(line=>line.uid===uid?{...line,[key]:value}:line)??null);
+  }
+  async function analyze(){
+    if(!selectedMessages.length||!selectionCustomer){
+      setError('Selecciona mensajes pendientes del mismo cliente antes de interpretar');return;
+    }
+    setAiBusy(true);setError('');setNotice('');
+    try{
+      const result=await getApi<AiResult>(token,'/ai/interpret',{method:'POST',
+        body:JSON.stringify({message_ids:selectedMessages.map(m=>m.id),send_images:sendImages})});
+      const valid=new Set(selectedMessages.map(m=>m.id));
+      const lines=result.items.filter(i=>i.source_message_ids.every(id=>valid.has(id))).map((item,index)=>({
+        uid:index+1,message_id:item.source_message_ids[0],source_message_ids:item.source_message_ids,
+        description:item.description,quantity:item.quantity,notes:item.notes||'',product_url:item.product_url||'',confidence:item.confidence,
+      }));
+      if(!lines.length){setError('No se identificaron productos: escribe la descripción manualmente');return;}
+      setSuggestions(lines);
+      setAiInfo({provider:result.provider,model:result.model,cached:result.cached,warning:result.warning});
+      await refreshProviders().catch(()=>{});
+    }catch(e){setError(e instanceof Error?e.message:'Error al interpretar');}
+    finally{setAiBusy(false);}
+  }
+  function addLine(){
+    const id=selectedMessages[0]?.id;if(!id)return;
+    setSuggestions(old=>[
+      ...(old??selectedMessages.map((m,index)=>({...edits[m.id],uid:index+1,source_message_ids:[m.id],confidence:'baja' as const}))),
+      {uid:Date.now(),message_id:id,source_message_ids:[id],description:'',quantity:1,notes:'',product_url:'',confidence:'baja'},
+    ]);
   }
   async function assign(message:InboxMessage){
     const id=assignments[message.id];
@@ -96,19 +145,20 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
     if(!customerId||!dayId||!ready)return;
     await perform(async()=>{
       const result=await getApi<{id:number}>(token,'/whatsapp/convert',{method:'POST',body:JSON.stringify({
-        customer_id:customerId,shopping_day_id:dayId,items:selectedMessages.map(m=>({
-          ...edits[m.id],
-          notes:edits[m.id].notes||null,
-          product_url:edits[m.id].product_url||null,
+        customer_id:customerId,shopping_day_id:dayId,items:rowsToConvert.map(item=>({
+          message_id:item.message_id,
+          ...('source_message_ids' in item ? {source_message_ids:item.source_message_ids} : {}),
+          description:item.description,quantity:item.quantity,
+          notes:item.notes||null,product_url:item.product_url||null,
         })),
       })});
-      setSelected([]);setEdits({});setDayId(null);
+      setSelected([]);setEdits({});setSuggestions(null);setAiInfo(null);setDayId(null);
       await onConverted();
       setNotice('Pedido #'+result.id+' creado para revisión');
     },'Pedido registrado para revisión');
   }
   return <section className="wa-page">
-    <div className="d-page-header"><div><span className="d-kicker">INTEGRACIÓN · FASE 3</span><h1>WhatsApp</h1>
+    <div className="d-page-header"><div><span className="d-kicker">INTEGRACIÓN · FASES 3 Y 4</span><h1>WhatsApp</h1>
       <p>Conecta el número por QR y organiza pedidos sin salir del sistema.</p></div>
       <button className="d-secondary wa-refresh" onClick={()=>{void status();void reload();}}><RefreshCw size={17}/> Actualizar</button>
     </div>
@@ -156,20 +206,50 @@ export default function WhatsAppInbox({token,onConverted}:{token:string;onConver
       </div>
       <aside className="d-card wa-convert">
         <div className="wa-convert-title"><ClipboardList size={22}/><div><h2>Crear pedido</h2><p>{selectedMessages.length} mensajes seleccionados</p></div></div>
-        {selectedMessages.length===0?<div className="wa-convert-empty"><p>Selecciona los mensajes que pertenecen al mismo pedido y cliente.</p><small>Por ahora las descripciones y cantidades se revisan manualmente; la IA será opcional en la próxima fase.</small></div>:
+        {selectedMessages.length===0?<div className="wa-convert-empty"><p>Selecciona los mensajes que pertenecen al mismo pedido y cliente.</p><small>Selecciona mensajes y utiliza IA opcional o revisa los artículos manualmente.</small></div>:
           <form onSubmit={e=>void convert(e)} className="wa-convert-form">
             {!selectionCustomer&&<p className="wa-warning">Selecciona mensajes de un solo cliente identificado.</p>}
+            <div className="wa-ai-box">
+              <div className="wa-ai-heading"><Sparkles size={19}/><b>Interpretar con IA gratuita</b></div>
+              <p>Extrae productos y cantidades de estos mensajes. Nunca confirma ni envía pedidos por sí sola.</p>
+              <label className="wa-ai-choice"><input type="checkbox" checked={sendImages} onChange={e=>{setSendImages(e.target.checked);setSuggestions(null);setAiInfo(null);}}/>
+                <span>Permitir enviar fotografías a proveedores externos</span></label>
+              <small>No se envían nombres ni teléfonos de los clientes. Las fotos pueden contener información personal: revísalas antes de activar la opción.</small>
+              <button className="wa-ai-button" disabled={busy||aiBusy||!selectionCustomer} type="button" onClick={()=>void analyze()}>
+                <Sparkles size={17}/>{aiBusy?'Interpretando...':'Interpretar mensajes'}</button>
+              {providers.length>0&&<div className="wa-ai-providers">{providers.map(p=><span key={p.name}>{p.name} · {p.configured?p.used_today+'/'+p.daily_limit:'sin configurar'}</span>)}</div>}
+              {aiInfo&&<div className="wa-ai-result">
+                <b>{aiInfo.provider==='reglas'?'Interpretación local (sin IA)':aiInfo.provider} {aiInfo.cached?'· caché':''}</b>
+                <p>{suggestions?.length??0} artículos sugeridos · {aiInfo.model??'sin modelo'}</p>
+                <small>{aiInfo.warning}</small>
+                <button className="wa-clear-ai" type="button" onClick={()=>{setSuggestions(null);setAiInfo(null);}}>Volver a captura manual</button>
+              </div>}
+            </div>
             <label>Cliente<input readOnly value={customers.find(c=>c.id===customerId)?.name||'Asignar cliente a los mensajes primero'}/></label>
             <label>Jornada<select required value={dayId||''} onChange={e=>setDayId(Number(e.target.value)||null)}>
               <option value="">Selecciona una jornada</option>{days.filter(d=>d.status==='programada').map(d=><option key={d.id} value={d.id}>{d.store==='costco'?'Costco':"Sam's"} · {d.purchase_date}</option>)}
             </select></label>
-            {selectedMessages.map(m=><div className="wa-line" key={m.id}>
-              <div className="wa-line-head"><b>Artículo del mensaje #{m.id}</b><button type="button" title="Quitar" onClick={()=>toggle(m)}><X size={16}/></button></div>
-              <label>Descripción<textarea required minLength={2} maxLength={2000} value={edits[m.id]?.description||''} onChange={e=>edit(m.id,'description',e.target.value)} placeholder="Nombre del producto, presentación, etc."/></label>
-              <label>Cantidad<input type="number" required min={1} max={999} value={edits[m.id]?.quantity??1} onChange={e=>edit(m.id,'quantity',Number(e.target.value))}/></label>
-              <label>Notas<input maxLength={1200} value={edits[m.id]?.notes||''} onChange={e=>edit(m.id,'notes',e.target.value)} placeholder="Preferencias o alternativas"/></label>
-              <label>Enlace opcional<input type="url" value={edits[m.id]?.product_url||''} onChange={e=>edit(m.id,'product_url',e.target.value)} placeholder="https://..."/></label>
+            {(suggestions??selectedMessages.map((m,index)=>({
+              ...edits[m.id],uid:index+1,source_message_ids:[m.id],confidence:'baja' as const,
+            }))).map(line=><div className="wa-line" key={line.uid}>
+              <div className="wa-line-head"><b>Artículo · mensaje #{line.message_id}</b>
+                <span className={'wa-confidence wa-'+line.confidence}>{line.confidence}</span>
+                {suggestions?<button title="Quitar artículo sugerido" type="button" onClick={()=>setSuggestions(old=>old?.filter(v=>v.uid!==line.uid)??null)}><Trash2 size={16}/></button>
+                  :<button type="button" title="Quitar mensaje" onClick={()=>{const msg=selectedMessages.find(m=>m.id===line.message_id);if(msg)toggle(msg);}}><X size={16}/></button>}
+              </div>
+              <label>Descripción<textarea required minLength={2} maxLength={2000} value={line.description||''}
+                onChange={e=>suggestions?editSuggestion(line.uid,'description',e.target.value):edit(line.message_id,'description',e.target.value)}
+                placeholder="Nombre del producto, presentación, etc."/></label>
+              <label>Cantidad<input type="number" required min={1} max={999} value={line.quantity??1}
+                onChange={e=>suggestions?editSuggestion(line.uid,'quantity',Number(e.target.value)):edit(line.message_id,'quantity',Number(e.target.value))}/></label>
+              <label>Notas<input maxLength={1200} value={line.notes||''}
+                onChange={e=>suggestions?editSuggestion(line.uid,'notes',e.target.value):edit(line.message_id,'notes',e.target.value)}
+                placeholder="Preferencias o alternativas"/></label>
+              <label>Enlace opcional<input type="url" value={line.product_url||''}
+                onChange={e=>suggestions?editSuggestion(line.uid,'product_url',e.target.value):edit(line.message_id,'product_url',e.target.value)}
+                placeholder="https://..."/></label>
             </div>)}
+            <button type="button" className="wa-add-line" onClick={addLine}><Plus size={15}/> Añadir otro artículo</button>
             <button className="d-primary" type="submit" disabled={!ready||busy}>Crear pedido por revisar</button>
             <p className="wa-disclaimer">El pedido queda en <b>pendiente de revisión</b>, nunca confirmado automáticamente.</p>
           </form>}
