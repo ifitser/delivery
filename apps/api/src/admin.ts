@@ -15,7 +15,7 @@ const customerSchema = z.object({
 const daySchema = z.object({
   store: z.enum(['costco', 'sams']),
   purchase_date: z.iso.date(),
-  cutoff_at: z.string().regex(/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$/, 'Usa fecha y hora local'),
+  cutoff_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/, 'Usa fecha y hora local'),
   buyer_id: z.number().int().positive().nullable().default(null),
 }).strict();
 const dayPatchSchema = daySchema.partial().extend({
