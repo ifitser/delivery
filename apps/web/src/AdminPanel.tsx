@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { ArrowLeft, CalendarDays, Check, ChevronRight, ClipboardList, ImagePlus, LayoutDashboard, LogOut, Pencil, Plus, RefreshCw, ShoppingBasket, Store, Trash2, Users, X, MessageCircle } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, ChevronRight, ClipboardList, ImagePlus, LayoutDashboard, LogOut, Pencil, Plus, RefreshCw, ShoppingBasket, Store, Trash2, Users, X, MessageCircle, QrCode } from 'lucide-react';
 import './admin.css';
 import AdminConsultations from './AdminConsultations';
+import WhatsAppInbox from './WhatsAppInbox';
 
 type Customer={id:number;name:string;phone:string|null;notes:string|null};
 type Day={id:number;store:'costco'|'sams';purchase_date:string;cutoff_at:string;buyer_id:number|null;buyer_name:string|null;status:string;order_count:number};
@@ -10,7 +11,7 @@ type Order={id:number;customer_id:number;shopping_day_id:number;customer_name:st
 type Item={id:number;description:string;quantity:number;purchased_quantity:number;price_cents:number|null;notes:string|null;product_url:string|null;status:string;images:{id:number;name:string}[]};
 type Detail={order:Order;items:Item[]};
 type Summary={customers:number;days:number;orders:number;items:number};
-type Tab='inicio'|'clientes'|'jornadas'|'pedidos'|'consultas';
+type Tab='inicio'|'clientes'|'jornadas'|'pedidos'|'consultas'|'whatsapp';
 type Props={user:{name:string;email:string};token:string;onLogout:()=>void};
 const storeName=(store:string)=>store==='costco'?'Costco':"Sam's Club";
 const formatDate=(d:string)=>new Date(d+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});
@@ -132,7 +133,7 @@ export default function AdminPanel({user,token,onLogout}:Props){
   }
 
   const nav:[Tab,string,typeof LayoutDashboard][]=[
-    ['inicio','Resumen',LayoutDashboard],['clientes','Clientes',Users],['jornadas','Jornadas',CalendarDays],['pedidos','Pedidos',ClipboardList],['consultas','Consultas',MessageCircle]
+    ['inicio','Resumen',LayoutDashboard],['clientes','Clientes',Users],['jornadas','Jornadas',CalendarDays],['pedidos','Pedidos',ClipboardList],['consultas','Consultas',MessageCircle],['whatsapp','WhatsApp',QrCode]
   ];
   return <div className="d-shell">
     <aside className="d-sidebar">
@@ -189,6 +190,7 @@ export default function AdminPanel({user,token,onLogout}:Props){
             </section>
           </>}
           {tab==='consultas'&&<AdminConsultations token={token}/>}
+          {tab==='whatsapp'&&<WhatsAppInbox token={token} onConverted={load}/>} 
           {tab==='pedidos'&&<>
             {selectedOrder!==null?<div className="d-backrow"><button className="d-back" onClick={()=>{setSelectedOrder(null);setEditingItem(null);}}><ArrowLeft size={18}/> Volver a pedidos</button></div>:<PageHeader kicker="GESTIÓN" title="Pedidos" subtitle="Captura encargos y revisa los productos de cada cliente." action="Nuevo pedido" onAction={()=>{resetForms();setForm('pedido');}}/>}
             {!selectedOrder&&form==='pedido'&&<section className="d-card d-form-card"><FormTitle title="Nuevo pedido manual" close={resetForms}/><form onSubmit={saveOrder} className="d-form-grid">

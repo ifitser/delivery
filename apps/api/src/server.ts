@@ -5,6 +5,8 @@ import rateLimit from '@fastify/rate-limit';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import type { Db } from './db.js';
+import { WhatsAppService } from './whatsapp.js';
+import { registerWhatsAppRoutes } from './whatsapp-routes.js';
 import { registerAdminRoutes } from './admin.js';
 import { registerBuyerRoutes, registerAdminConsultationRoutes } from './buyer.js';
 import type { UserRecord, UserRole } from './types.js';
@@ -54,6 +56,10 @@ export function buildApp(options: { db: Db; jwtSecret: string; webOrigin: string
   registerAdminRoutes(app, options.db, authenticate, requireRole('admin'));
   registerBuyerRoutes(app, options.db, authenticate, requireRole('buyer'));
   registerAdminConsultationRoutes(app, options.db, authenticate, requireRole('admin'));
+  const whatsapp = new WhatsAppService(options.db);
+  registerWhatsAppRoutes(app, options.db, whatsapp, authenticate, requireRole('admin'));
+  app.addHook('onReady', async()=>{await whatsapp.resume();});
+  app.addHook('onClose', async()=>{await whatsapp.shutdown();});
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof Error && 'statusCode' in error && error.statusCode === 429) return reply.code(429).send({ error: 'Demasiados intentos. Intenta más tarde.' });
     app.log.error(error);

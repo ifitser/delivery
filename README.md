@@ -69,8 +69,12 @@ Entra con la cuenta de administrador, registra un cliente, programa una jornada 
 
 Inicia sesión con el usuario **comprador** asignado a una jornada. Desde su panel puede iniciar la compra, consultar listas, registrar precios y gestionar alternativas. El administrador puede registrar la respuesta recibida de clientes desde **Consultas**. Guía completa: [docs/FASE_2.md](docs/FASE_2.md).
 
-## Próximas fases
+## Fase 3 — WhatsApp por QR
 
-Conectar WhatsApp por QR como canal de recepción y consulta, seguido de interpretación opcional mediante IA gratuita. Ambos módulos serán independientes del núcleo de pedidos.
+Entra como administrador a la nueva sección **WhatsApp** para vincular el número por QR. Los mensajes nuevos (texto/fotografías) se guardan en una bandeja, se identifican por número si es posible y pueden convertirse en pedidos **pendientes de revisión**. Lee [docs/FASE_3.md](docs/FASE_3.md) antes de vincular un número real. La integración es **no oficial** y puede desconectarse o sufrir restricciones.
+
+## Próxima fase
+
+Interpretación opcional de mensajes e imágenes con proveedores de IA gratuitos, siempre con validación humana.
 
 **Seguridad:** este repositorio está público actualmente. Cámbialo a **privado** antes de usar datos o números telefónicos reales. No publiques `.env` ni la base de datos. El prototipo local no está listo para exposición pública a Internet.
