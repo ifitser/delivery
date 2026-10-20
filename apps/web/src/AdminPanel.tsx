@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowLeft, CalendarDays, Check, ChevronRight, ClipboardList, ImagePlus, LayoutDashboard, LogOut, Pencil, Plus, RefreshCw, ShoppingBasket, Store, Trash2, Users, X } from 'lucide-react';
 import './admin.css';
 
@@ -227,5 +227,5 @@ function Metric({label,value,icon:Icon}:{label:string;value:number;icon:typeof U
 function Empty({text}:{text:string}){return <div className="d-empty"><ClipboardList size={27}/><p>{text}</p></div>;}
 function PageHeader({kicker,title,subtitle,action,onAction}:{kicker:string;title:string;subtitle:string;action:string;onAction:()=>void}){return <div className="d-page-header"><div><span className="d-kicker">{kicker}</span><h1>{title}</h1><p>{subtitle}</p></div><button className="d-primary" onClick={onAction}><Plus size={18}/>{action}</button></div>;}
 function FormTitle({title,close}:{title:string;close:()=>void}){return <div className="d-form-title"><h2>{title}</h2><button type="button" onClick={close} aria-label="Cerrar formulario"><X size={19}/></button></div>;}
-function Field({label,children,wide}:{label:string;children:React.ReactNode;wide?:boolean}){return <label className={'d-field'+(wide?' wide':'')}><span>{label}</span>{children}</label>;}
+function Field({label,children,wide}:{label:string;children:ReactNode;wide?:boolean}){return <label className={'d-field'+(wide?' wide':'')}><span>{label}</span>{children}</label>;}
 function FormButtons({busy,close,text}:{busy:boolean;close:()=>void;text:string}){return <div className="d-form-buttons"><button type="submit" className="d-primary" disabled={busy}>{busy?'Guardando...':text}</button><button type="button" className="d-secondary" onClick={close}>Cancelar</button></div>;}
