@@ -44,6 +44,7 @@ export function ingest(db:Db,input:Incoming):{inserted:boolean;id:number|null}{
   const accepted=input.image&&mime&&extensions[mime]&&input.image.bytes.length<=4*1024*1024
     &&input.image.bytes.length>0;
   const filename=accepted?randomUUID()+'.'+extensions[mime]:null;
+  const status=input.kind==='image'&&!filename?'error_media':'pendiente';
   try{
     if(filename&&input.image){
       mkdirSync(uploadDir,{recursive:true});
@@ -52,8 +53,8 @@ export function ingest(db:Db,input:Incoming):{inserted:boolean;id:number|null}{
     const saved=db.transaction(()=>{
       const result=db.prepare(`INSERT OR IGNORE INTO inbound_messages
         (external_id,customer_id,body,received_at,status,remote_jid,sender_phone,kind)
-        VALUES (?,?,?,?,'pendiente',?,?,?)`)
-        .run(input.externalId,customer,input.body?.slice(0,5000)||null,input.receivedAt,input.remoteJid,phone,input.kind);
+        VALUES (?,?,?,?,?,?,?,?)`)
+        .run(input.externalId,customer,input.body?.slice(0,5000)||null,input.receivedAt,status,input.remoteJid,phone,input.kind);
       if(!result.changes)return null;
       const id=Number(result.lastInsertRowid);
       if(filename&&mime){
@@ -95,7 +96,7 @@ export function convertMessages(db:Db,input:z.output<typeof convertSchema>):numb
       for(const item of input.items){
         const msg=db.prepare("SELECT id,customer_id,status FROM inbound_messages WHERE id=?").get(item.message_id)
           as {id:number;customer_id:number|null;status:string}|undefined;
-        if(!msg||msg.status!=='pendiente'||msg.customer_id!==input.customer_id)
+        if(!msg||!['pendiente','error_media'].includes(msg.status)||msg.customer_id!==input.customer_id)
           throw new InboxError(409,'Los mensajes deben estar pendientes y pertenecer al mismo cliente');
       }
       const result=db.prepare(`INSERT INTO orders(customer_id,shopping_day_id,source,status,notes)
