@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import AdminPanel from './AdminPanel';
+import BuyerPanel from './BuyerPanel';
 import { ArrowRight, CalendarDays, ClipboardList, LockKeyhole, LogOut, PackageCheck, ShieldCheck, ShoppingBasket, Smartphone, UserRound } from 'lucide-react';
 
 type Role = 'admin' | 'buyer' | 'customer';
@@ -148,5 +149,5 @@ export default function App() {
   function login(nextToken: string, nextUser: User) { sessionStorage.setItem('delivery.token', nextToken); setToken(nextToken); setUser(nextUser); setChecking(false); }
   function logout() { sessionStorage.removeItem('delivery.token'); setToken(''); setUser(null); }
   if (checking) return <div className="loading">Conectando con Delivery...</div>;
-  return user && token ? (user.role === 'admin' ? <AdminPanel user={user} token={token} onLogout={logout}/> : <Dashboard user={user} token={token} onLogout={logout}/>) : <Login onLogin={login}/>;
+  return user && token ? (user.role === 'admin' ? <AdminPanel user={user} token={token} onLogout={logout}/> : user.role === 'buyer' ? <BuyerPanel user={user} token={token} onLogout={logout}/> : <Dashboard user={user} token={token} onLogout={logout}/>) : <Login onLogin={login}/>;
 }

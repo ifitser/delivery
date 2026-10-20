@@ -63,3 +63,31 @@ th,td{padding:17px 20px;white-space:nowrap;border-bottom:1px solid #f0f3f1}tbody
 .d-alert span{flex:1}.d-alert button{border:0;background:none;color:inherit}.d-alert.error{background:#fff1ee;color:#9e453e;border:1px solid #f9d9d0}.d-alert.success{background:#e9f7ed;color:#267a50;border:1px solid #ccead8}
 @media(max-width:1150px){.d-stats{grid-template-columns:repeat(2,1fr)}.d-two-cols{grid-template-columns:1fr}}
 @media(max-width:780px){.d-sidebar{display:none}.d-main{width:100%}.d-header{padding:0 22px;justify-content:space-between;height:60px}.d-mobile-brand{display:block!important;font-size:21px;font-weight:850;letter-spacing:-1px;color:#204534}.d-mobile-logout{display:block!important}.d-body{padding:30px 19px 108px}.d-welcome,.d-page-header,.d-detail-head{align-items:flex-start;flex-direction:column;gap:17px}.d-welcome h1,.d-page-header h1,.d-detail-head h1{font-size:31px}.d-mobile-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e2eae3;z-index:10;justify-content:space-around;padding:9px 4px calc(8px + env(safe-area-inset-bottom))}.d-mobile-nav button{border:0;background:none;display:flex;align-items:center;flex-direction:column;gap:5px;color:#8e9b92;padding:7px;font-size:10px;font-weight:720}.d-mobile-nav button.active{color:#248051}.d-form-grid{grid-template-columns:1fr}.d-form-buttons,.d-field.wide{grid-column:1}.d-item{padding:17px;gap:12px}.d-item-media{max-width:95px}.d-photo{width:85px;height:85px}.d-item-line{align-items:flex-start;flex-direction:column}.d-connected{font-size:11px}.d-metric{padding:18px}.d-metric strong{font-size:30px}.d-stats{gap:10px}.d-metric-top{font-size:11px}.d-card-head{padding:20px}.d-detail-actions{width:100%;justify-content:space-between}}
+
+.d-consult-warning{display:flex;align-items:flex-start;gap:14px;padding:18px 19px;margin-bottom:25px;border-radius:14px;background:#fff8e9;border:1px solid #f3e2c2;color:#8b7247;font-size:13px;line-height:1.7}
+.d-consult-warning svg{flex-shrink:0;margin-top:3px}
+.d-consult-label{display:flex;align-items:center;gap:9px;margin:35px 0 16px;font-size:19px;font-weight:790;color:#314c3b}
+.d-consult-label span{font-size:12px;background:#edf5ec;padding:5px 10px;border-radius:20px;color:#2e8053}
+.d-consult-none{font-size:13px;color:#8c9b90;margin:15px 0 25px}
+.d-consult-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,390px),1fr));gap:17px}
+.d-consult-card{padding:23px;display:flex;flex-direction:column;gap:13px}
+.d-consult-cardtop{display:flex;justify-content:space-between;align-items:center;color:#94a69b;font-size:12px}
+.d-consult-card h3{font-size:17px;margin:4px 0 0;letter-spacing:-.3px}
+.d-consult-card p{font-size:13px;line-height:1.6;color:#596d5e;margin:0}
+.d-consult-meta{color:#8f9f95!important}
+.d-consult-question{padding:14px;border-radius:10px;background:#f7faf7;display:flex;flex-direction:column;gap:9px}
+.d-consult-question b{font-size:12px}
+.d-consult-answer{background:#eaf7ee;border-radius:10px;padding:12px}
+.d-consult-form{display:grid;gap:12px}
+.d-consult-form label{font-size:12px;font-weight:750;color:#5c7261;display:flex;flex-direction:column;gap:7px}
+.d-consult-form textarea,.d-consult-form select{background:white;border:1px solid #d6e5da;border-radius:9px;padding:11px;color:#334a3c}
+.d-consult-form textarea{min-height:84px;resize:vertical}
+.d-consult-controls{display:flex;gap:9px;flex-wrap:wrap}
+.d-refresh{display:inline-flex;align-items:center;gap:8px}
+@media(max-width:780px){.d-consult-grid{grid-template-columns:1fr}.d-mobile-nav button{padding:7px 3px;font-size:9px}.d-consult-card{padding:18px}}
+
+.d-alternative-images{display:flex;flex-wrap:wrap;gap:8px;padding-top:8px}
+.d-alternative-photo{width:90px;height:90px;border-radius:10px;object-fit:cover;border:1px solid #d8e6db;background:white}
+.d-alternative-placeholder{font-size:11px;color:#8da193;padding:12px}
+
+.d-purchase-receipt{display:flex;align-items:center;gap:7px;flex-wrap:wrap;background:#ebf8ee;padding:9px 12px;border-radius:9px;color:#28784d!important;font-weight:660}

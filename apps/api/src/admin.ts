@@ -78,9 +78,9 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, authenticate: 
   const secured = { preHandler: [authenticate, requireAdmin] };
   const uploadDir = resolve(process.cwd(), 'storage/uploads');
   const hasCustomer = db.prepare('SELECT id FROM customers WHERE id = ?');
-  const hasDay = db.prepare("SELECT id FROM shopping_days WHERE id = ? AND status NOT IN ('finalizada','cancelada')");
+  const hasDay = db.prepare("SELECT id FROM shopping_days WHERE id = ? AND status = 'programada'");
   const hasBuyer = db.prepare("SELECT id FROM users WHERE id = ? AND role = 'buyer' AND active = 1");
-  const editableItem = db.prepare("SELECT i.* FROM order_items i JOIN orders o ON o.id = i.order_id WHERE i.id = ? AND o.status NOT IN ('finalizado','cancelado')");
+  const editableItem = db.prepare("SELECT i.* FROM order_items i JOIN orders o ON o.id = i.order_id JOIN shopping_days d ON d.id = o.shopping_day_id WHERE i.id = ? AND o.status IN ('borrador','pendiente_revision','confirmado') AND d.status = 'programada'");
 
   app.get('/api/admin/summary', secured, async () => {
     const count = (sql: string) => (db.prepare(sql).get() as { n: number }).n;
@@ -138,7 +138,8 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, authenticate: 
     const input=parse(dayPatchSchema.refine(v=>Object.keys(v).length>0),request.body,reply); if(!input) return;
     const current=db.prepare('SELECT * FROM shopping_days WHERE id=?').get(id) as Record<string, any>|undefined;
     if(!current) return err(reply,404,'Jornada no encontrada');
-    if (current.status==='finalizada' || current.status==='cancelada') return err(reply,409,'Jornada cerrada');
+    if (current.status!=='programada') return err(reply,409,'La jornada ya inició o fue cerrada');
+    if (input.status && !['programada','cancelada'].includes(input.status)) return err(reply,400,'El comprador controla el inicio y cierre de la jornada');
     const next={...current,...input};
     if(!validDatePair(String(next.purchase_date),String(next.cutoff_at))) return err(reply,400,'La fecha límite debe ser anterior o igual a la compra');
     if(next.buyer_id && !hasBuyer.get(next.buyer_id)) return err(reply,400,'Comprador no disponible');
@@ -182,9 +183,9 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, authenticate: 
   app.patch('/api/admin/orders/:id',secured,async(request,reply)=>{
     const id=resolveId(request,reply);if(!id)return;
     const input=parse(orderPatch.refine(v=>Object.keys(v).length>0),request.body,reply);if(!input)return;
-    const current=db.prepare('SELECT * FROM orders WHERE id=?').get(id) as {status:string;notes:string|null}|undefined;
+    const current=db.prepare('SELECT o.*,d.status day_status FROM orders o JOIN shopping_days d ON d.id=o.shopping_day_id WHERE o.id=?').get(id) as {status:string;notes:string|null;day_status:string}|undefined;
     if(!current)return err(reply,404,'Pedido no encontrado');
-    if(['finalizado','cancelado'].includes(current.status))return err(reply,409,'Pedido cerrado');
+    if(!['borrador','pendiente_revision','confirmado'].includes(current.status)||current.day_status!=='programada')return err(reply,409,'Pedido cerrado o jornada iniciada');
     if(input.status && !['borrador','pendiente_revision','confirmado','cancelado'].includes(input.status))
       return err(reply,400,'El comprador cambiará este estado en la Fase 2');
     if(input.status==='confirmado' && !(db.prepare('SELECT id FROM order_items WHERE order_id=? LIMIT 1').get(id)))
@@ -197,7 +198,7 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, authenticate: 
   app.post('/api/admin/orders/:id/items',secured,async (request,reply)=>{
     const id=resolveId(request,reply);if(!id)return;
     const input=parse(itemSchema,request.body,reply);if(!input)return;
-    const order=db.prepare("SELECT o.id FROM orders o JOIN shopping_days d ON d.id=o.shopping_day_id WHERE o.id=? AND o.status NOT IN ('finalizado','cancelado') AND d.status NOT IN ('finalizada','cancelada')").get(id);
+    const order=db.prepare("SELECT o.id FROM orders o JOIN shopping_days d ON d.id=o.shopping_day_id WHERE o.id=? AND o.status IN ('borrador','pendiente_revision','confirmado') AND d.status = 'programada'").get(id);
     if(!order)return err(reply,409,'Pedido inexistente o cerrado');
     const result=db.prepare('INSERT INTO order_items(order_id,description,quantity,notes,product_url) VALUES(?,?,?,?,?)')
       .run(id,input.description,input.quantity,optionalText(input.notes),optionalText(input.product_url));
